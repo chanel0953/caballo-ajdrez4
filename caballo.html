@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problema del Salto del Caballo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .board-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, 60px);
+            grid-template-rows: repeat(8, 60px);
+            gap: 2px;
+            background: #333;
+            padding: 2px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .cell {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .cell.white {
+            background: #f0d9b5;
+        }
+
+        .cell.black {
+            background: #b58863;
+        }
+
+        .cell.current {
+            background: #7fc97f !important;
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(127, 201, 127, 0.8);
+            z-index: 10;
+        }
+
+        .cell.visited {
+            color: white;
+        }
+
+        .knight {
+            font-size: 30px;
+            position: absolute;
+            animation: bounce 0.5s ease;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .info-item {
+            text-align: center;
+            padding: 10px;
+        }
+
+        .info-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            color: #333;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .speed-control label {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .speed-control input {
+            width: 200px;
+        }
+
+        .legend {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-box {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>♞ Problema del Salto del Caballo ♞</h1>
+        <p class="subtitle">Algoritmo de Backtracking - Recorrido Completo del Tablero</p>
+
+        <div class="info">
+            <div class="info-row">
+                <div class="info-item">
+                    <div class="info-label">Movimiento Actual</div>
+                    <div class="info-value" id="moveCount">0</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Total de Casillas</div>
+                    <div class="info-value">64</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Estado</div>
+                    <div class="info-value" id="status">Listo</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="board-container">
+            <div class="board" id="board"></div>
+        </div>
+
+        <div class="speed-control">
+            <label for="speed">Velocidad de Animación:</label>
+            <input type="range" id="speed" min="10" max="1000" value="300" step="10">
+            <span id="speedValue">300ms</span>
+        </div>
+
+        <div class="controls">
+            <button id="startBtn" onclick="iniciarRecorrido()">▶ Iniciar Recorrido</button>
+            <button id="pauseBtn" onclick="pausarRecorrido()" disabled>⏸ Pausar</button>
+            <button id="resetBtn" onclick="resetearTablero()">↻ Resetear</button>
+            <button id="stepBtn" onclick="siguientePaso()" disabled>→ Siguiente Paso</button>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-box" style="background: #7fc97f;"></div>
+                <span>Posición Actual</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: #b58863; color: white; display: flex; align-items: center; justify-content: center;">1</div>
+                <span>Casilla Visitada</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: #f0d9b5;"></div>
+                <span>Casilla Libre</span>
+            </div>
+        </div>
+
+        <div id="statusMessage"></div>
+    </div>
+
+    <script>
+        // Variables globales
+        const TAMANO = 8;
+        let tablero = [];
+        let movimientos = [];
+        let movimientoActual = 0;
+        let intervalId = null;
+        let pausado = false;
+        let velocidad = 300;
+
+        // Movimientos posibles del caballo (en forma de L)
+        const dx = [2, 1, -1, -2, -2, -1, 1, 2];
+        const dy = [1, 2, 2, 1, -1, -2, -2, -1];
+
+        // Inicializar tablero visual
+        function inicializarTablero() {
+            const boardElement = document.getElementById('board');
+            boardElement.innerHTML = '';
+            
+            for (let i = 0; i < TAMANO; i++) {
+                for (let j = 0; j < TAMANO; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = `cell ${(i + j) % 2 === 0 ? 'white' : 'black'}`;
+                    cell.id = `cell-${i}-${j}`;
+                    boardElement.appendChild(cell);
+                }
+            }
+        }
+
+        // Verificar si una posición es válida
+        function esMovimientoValido(x, y) {
+            return x >= 0 && x < TAMANO && y >= 0 && y < TAMANO && tablero[x][y] === 0;
+        }
+
+        // Algoritmo de backtracking para resolver el problema
+        function resolverCaballo(x, y, movNum) {
+            tablero[x][y] = movNum;
+            movimientos.push({x: x, y: y, numero: movNum});
+
+            if (movNum === TAMANO * TAMANO) {
+                return true;
+            }
+
+            // Heurística de Warnsdorff: elegir el movimiento con menos opciones futuras
+            let siguientesMovimientos = [];
+            
+            for (let k = 0; k < 8; k++) {
+                const nextX = x + dx[k];
+                const nextY = y + dy[k];
+                
+                if (esMovimientoValido(nextX, nextY)) {
+                    let grado = contarMovimientosPosibles(nextX, nextY);
+                    siguientesMovimientos.push({x: nextX, y: nextY, grado: grado});
+                }
+            }
+
+            // Ordenar por grado (heurística de Warnsdorff)
+            siguientesMovimientos.sort((a, b) => a.grado - b.grado);
+
+            for (let siguiente of siguientesMovimientos) {
+                if (resolverCaballo(siguiente.x, siguiente.y, movNum + 1)) {
+                    return true;
+                }
+            }
+
+            // Backtracking
+            tablero[x][y] = 0;
+            movimientos.pop();
+            return false;
+        }
+
+        // Contar movimientos posibles desde una posición
+        function contarMovimientosPosibles(x, y) {
+            let count = 0;
+            for (let k = 0; k < 8; k++) {
+                const nextX = x + dx[k];
+                const nextY = y + dy[k];
+                if (esMovimientoValido(nextX, nextY)) {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        // Iniciar el recorrido
+        function iniciarRecorrido() {
+            // Resetear
+            tablero = Array(TAMANO).fill(0).map(() => Array(TAMANO).fill(0));
+            movimientos = [];
+            movimientoActual = 0;
+
+            // Resolver el problema
+            document.getElementById('status').textContent = 'Calculando...';
+            document.getElementById('statusMessage').className = 'status info';
+            document.getElementById('statusMessage').textContent = 'Calculando la solución...';
+
+            setTimeout(() => {
+                const resuelto = resolverCaballo(0, 0, 1);
+                
+                if (resuelto) {
+                    document.getElementById('statusMessage').className = 'status success';
+                    document.getElementById('statusMessage').textContent = '¡Solución encontrada! Iniciando animación...';
+                    animarRecorrido();
+                } else {
+                    document.getElementById('statusMessage').className = 'status error';
+                    document.getElementById('statusMessage').textContent = 'No se encontró solución desde esta posición.';
+                    document.getElementById('status').textContent = 'Sin solución';
+                }
+            }, 100);
+
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('pauseBtn').disabled = false;
+            document.getElementById('stepBtn').disabled = false;
+        }
+
+        // Animar el recorrido
+        function animarRecorrido() {
+            pausado = false;
+            intervalId = setInterval(() => {
+                if (!pausado && movimientoActual < movimientos.length) {
+                    mostrarMovimiento(movimientoActual);
+                    movimientoActual++;
+                } else if (movimientoActual >= movimientos.length) {
+                    clearInterval(intervalId);
+                    document.getElementById('status').textContent = '¡Completado!';
+                    document.getElementById('statusMessage').className = 'status success';
+                    document.getElementById('statusMessage').textContent = '¡Recorrido completado exitosamente! El caballo visitó todas las 64 casillas.';
+                    document.getElementById('pauseBtn').disabled = true;
+                    document.getElementById('stepBtn').disabled = true;
+                }
+            }, velocidad);
+        }
+
+        // Mostrar un movimiento específico
+        function mostrarMovimiento(index) {
+            if (index >= movimientos.length) return;
+
+            const mov = movimientos[index];
+            const cellId = `cell-${mov.x}-${mov.y}`;
+            const cell = document.getElementById(cellId);
+
+            // Remover clase 'current' de todas las celdas
+            document.querySelectorAll('.cell').forEach(c => c.classList.remove('current'));
+
+            // Marcar celda actual
+            cell.classList.add('current');
+            cell.classList.add('visited');
+            cell.innerHTML = `${mov.numero}<span class="knight">♞</span>`;
+
+            // Actualizar contador
+            document.getElementById('moveCount').textContent = mov.numero;
+            document.getElementById('status').textContent = 'En proceso';
+        }
+
+        // Pausar recorrido
+        function pausarRecorrido() {
+            pausado = !pausado;
+            document.getElementById('pauseBtn').textContent = pausado ? '▶ Continuar' : '⏸ Pausar';
+        }
+
+        // Siguiente paso manual
+        function siguientePaso() {
+            if (movimientoActual < movimientos.length) {
+                pausado = true;
+                mostrarMovimiento(movimientoActual);
+                movimientoActual++;
+            }
+        }
+
+        // Resetear tablero
+        function resetearTablero() {
+            clearInterval(intervalId);
+            movimientoActual = 0;
+            movimientos = [];
+            tablero = Array(TAMANO).fill(0).map(() => Array(TAMANO).fill(0));
+            
+            inicializarTablero();
+            
+            document.getElementById('moveCount').textContent = '0';
+            document.getElementById('status').textContent = 'Listo';
+            document.getElementById('statusMessage').textContent = '';
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = true;
+            document.getElementById('stepBtn').disabled = true;
+            pausado = false;
+        }
+
+        // Control de velocidad
+        document.getElementById('speed').addEventListener('input', function(e) {
+            velocidad = parseInt(e.target.value);
+            document.getElementById('speedValue').textContent = velocidad + 'ms';
+            
+            if (intervalId && !pausado) {
+                clearInterval(intervalId);
+                animarRecorrido();
+            } 
+        });
+
+        // Inicializar al cargar la página
+        window.onload = function() {
+            inicializarTablero();
+        };
+    </script>
+</body>
+</html>
